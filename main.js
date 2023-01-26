@@ -17,6 +17,11 @@ app.post('/', (req, res) => {
     res.json({'message': 'hello, it is working'})
 })
 
+app.get('/', (req, res) => {
+    console.log("Hello")
+    res.json({'message': 'hello, it is working'})
+})
+
 // start server
 app.listen(port, () => {
     console.log(`Server listening on Port: ${port}`);
