@@ -1,3 +1,4 @@
+const fs = require('fs/promises');
 
 //functions
 const example = async ((filename, content) => {

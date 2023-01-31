@@ -5,8 +5,6 @@ require("dotenv").config()
 const { Pool, Client } = require('pg')
 
 require('dotenv').config();
-const fs = require('fs/promises');
-const { timeStamp, time } = require('console');
 
 // Create Express Instance
 const app = express();
@@ -36,7 +34,7 @@ app.post('/data/beerpi/sensors', (req, res) => {
       let sensorValue = body.sensorValue
 
       console.log(body)
-      
+    
       // Check if values are filled, if not, add default
       sensorId ? sensorId : sensorId = 'na' 
       sensorName ? sensorName : sensorName = 'na'
@@ -51,6 +49,19 @@ app.post('/data/beerpi/sensors', (req, res) => {
       } finally {
         pool.end
       }
+
+      // get last entry - TEST ONLY
+      pool.connect((err, client, done) => {
+        if (err) throw err
+        client.query('SELECT * FROM "monitoring_data" order by id desc', (err, res) => {
+          done()
+          if (err) {
+            console.log(err.stack)
+          } else {
+            console.log("Entry:" + res.rows[0].sensor_id + " : " + res.rows[0].sensor_value)
+          }
+        })
+      })
 
       res.json(req.body)
 
