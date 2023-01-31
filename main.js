@@ -1,45 +1,62 @@
 const express = require('express')
 const cors = require('cors');
 const morgan = require('morgan');
+require("dotenv").config()
+const { Pool, Client } = require('pg')
 
 require('dotenv').config();
 const fs = require('fs/promises');
+const { timeStamp, time } = require('console');
 
 // Create Express Instance
 const app = express();
 const port = process.env.PORT || 1337;
 
+// Database connection
+const pool = new Pool();
+
 // Middleware
-app.use(cors());
+app.use(cors())
 app.use(morgan('tiny'));
 
 // parse various different custom JSON types as JSON
 app.use(express.json());
 
-//functions
-async function example(filename, content) {
-    try {
-      await fs.writeFile(`data/${filename}.json`, content);
-    } catch (err) {
-      console.log(err);
-      await fs.writeFile(`err/${filename}.json`, err);
-    }
-  }
-
 // Endpoint definition
-app.post('/', (req, res) => {
+app.post('/data/beerpi/sensors', (req, res) => {
     // assign apiKey to the header value x-api-key
     let apiKey = req.header('x-api-key')
+    if(apiKey === process.env.APIKEY) {
+      
+      const body = req.body
+      const timesStamp = new Date().toISOString()
 
-    // Check if apiKey is filled, else set value to unix timestamp of the current time
-    apiKey ? apiKey : apiKey = Date.now().toString()
+      let sensorId = body.sensorId
+      let sensorName = body.sensorName
+      let sensorValue = body.sensorValue
 
-    // call file creation function
-    example(apiKey, JSON.stringify(req.body))
+      console.log(body)
+      
+      // Check if values are filled, if not, add default
+      sensorId ? sensorId : sensorId = 'na' 
+      sensorName ? sensorName : sensorName = 'na'
+      sensorValue ? sensorValue : sensorValue = '999'
 
-    // Send response
-    //res.json(JSON.stringify(req.body))
-  res.json(req.body)
+      // Insert value in Database
+      try {
+        pool.query(`INSERT INTO "monitoring_data"("sensor_id", "sensor_name", "sensor_value", "timestamp") VALUES($1, $2, $3, $4)`, 
+          [sensorId, sensorName, sensorValue, timesStamp])
+      } catch (e) {
+        throw e
+      } finally {
+        pool.end
+      }
+
+      res.json(req.body)
+
+  }else{
+    res.json({"message": "wrong API key"})
+  }
 })
 
 // start server
