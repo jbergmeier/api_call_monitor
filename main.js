@@ -11,7 +11,13 @@ const app = express();
 const port = process.env.PORT || 1337;
 
 // Database connection
-const pool = new Pool();
+const pool = new Pool({
+  min: 0,
+  max: 5,
+  acquireTimeoutMillis: 60000,
+  idleTimeoutMillis: 600000,
+});
+
 
 // Constants & Variables
 let errorCounter = 0
