@@ -2,6 +2,10 @@ const express = require('express')
 const cors = require('cors');
 const morgan = require('morgan');
 require("dotenv").config()
+const path = require('path');
+const fetch = require('node-fetch');
+
+
 const { Pool, Client } = require('pg')
 
 require('dotenv').config();
@@ -33,8 +37,50 @@ app.use(morgan('tiny'));
 
 // parse various different custom JSON types as JSON
 app.use(express.json());
+app.set("view engine", "ejs");
+
+// Weather API to get the current temeratures
+const currentWeatherUrl = "https://api.darksky.net/forecast/39e79092278acdea028920846857fad3/51.64780992371756,7.832849311403853?exclude=minutely,hourly,daily,alerts,flags&units=si" 
 
 // Endpoint definition
+// Get Data from Database
+app.get('/data/beerpi/sensors', (req, res) => {
+
+  // get data from database!
+  const checkData = () => {
+    pool.connect((err, client, done) => {
+      if (err) throw err
+      client.query('SELECT * FROM "monitoring_data" order by id desc', (err, res) => {
+        done()
+        if (err) {
+          console.log(err.stack)
+        }else {
+        console.log(res)
+      }}
+    )}
+    )}
+    
+    checkData()
+
+
+  // Call weather API and respond with temperature
+  fetch(currentWeatherUrl)
+  .then((response) => response.json())
+  .then((user) => {
+    console.log(user)
+    console.log(user.currently.temperature);
+    res.render("index", {name: user.currently.temperature});
+  });
+
+})
+
+// Get Data from Database
+app.get('/data/beerpi/sensor/1', (req, res) => {
+  console.log(__dirname)
+  res.sendFile(path.join(__dirname, '/about.html'))
+})
+
+// Post new Data
 app.post('/data/beerpi/sensors', (req, res) => {
     // assign apiKey to the header value x-api-key
     let apiKey = req.header('x-api-key')
